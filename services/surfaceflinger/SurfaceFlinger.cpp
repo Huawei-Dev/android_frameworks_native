@@ -88,6 +88,8 @@
 #endif
 
 #define DISPLAY_COUNT       1
+#define FBIOBLANK           0x4611
+#define FB_BLANK_UNBLANK    0
 
 /*
  * DEBUG_SCREENSHOTS: set to true to check that screenshots are not all
@@ -733,6 +735,7 @@ int SurfaceFlinger::getActiveConfig(const sp<IBinder>& display) {
 void SurfaceFlinger::setActiveConfigInternal(const sp<DisplayDevice>& hw, int mode) {
     ALOGD("Set active config mode=%d, type=%d flinger=%p", mode, hw->getDisplayType(),
           this);
+
     int32_t type = hw->getDisplayType();
     int currentMode = hw->getActiveConfig();
 
@@ -2598,6 +2601,17 @@ void SurfaceFlinger::setPowerModeInternal(const sp<DisplayDevice>& hw,
         int mode) {
     ALOGD("Set power mode=%d, type=%d flinger=%p", mode, hw->getDisplayType(),
             this);
+
+    if (mode == 2)
+	{
+	    int fd, ret;
+	    fd = open("/dev/graphics/fb0",O_WRONLY);
+	    ret = ioctl(fd, FBIOBLANK, FB_BLANK_UNBLANK);
+
+	    if (ret < 0)
+		ALOGE("Error waking up LCD: %d (%s)\n", ret, strerror(errno));
+    }
+
     int32_t type = hw->getDisplayType();
     int currentMode = hw->getPowerMode();
 
